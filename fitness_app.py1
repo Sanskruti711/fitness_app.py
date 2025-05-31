@@ -1,0 +1,247 @@
+pip install streamlit pandas matplotlib
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Constants
+INDIAN_FOOD_DATABASE = {
+    "Rotis": {"calories": 70, "carbs": 15, "protein": 3, "fat": 0.5},
+    "Rice": {"calories": 130, "carbs": 28, "protein": 2.7, "fat": 0.3},
+    # Add more Indian foods
+}
+
+EXERCISE_PLANS = {
+    "weight_loss": {
+        "beginner": ["Jumping jacks", "Squats", "Push-ups"],
+        # More levels
+    },
+    # More plans
+}
+
+# Helper functions
+def calculate_bmi(weight, height):
+    return weight / ((height/100) ** 2)
+
+def get_bmi_category(bmi):
+    if bmi < 18.5: return "Underweight"
+    elif 18.5 <= bmi < 25: return "Normal"
+    elif 25 <= bmi < 30: return "Overweight"
+    else: return "Obese"
+
+# Main app
+def main():
+    st.set_page_config(page_title="Indian Fitness Planner", layout="wide")
+    
+    # Sidebar for navigation
+    menu = ["Home", "Fitness Plan", "Diet Plan", "Wellness Tips", "Progress Tracker"]
+    choice = st.sidebar.selectbox("Menu", menu)
+    
+    if choice == "Home":
+        show_home()
+    elif choice == "Fitness Plan":
+        show_fitness()
+    elif choice == "Diet Plan":
+        show_diet()
+    elif choice == "Wellness Tips":
+        show_wellness()
+    elif choice == "Progress Tracker":
+        show_tracker()
+
+def show_home():
+    st.title("Indian Fitness & Wellness Planner")
+    
+    with st.form("user_profile"):
+        st.header("Create Your Profile")
+        name = st.text_input("Name")
+        age = st.number_input("Age", min_value=10, max_value=100)
+        gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+        weight = st.number_input("Weight (kg)", min_value=30.0, max_value=200.0)
+        height = st.number_input("Height (cm)", min_value=100, max_value=250)
+        target = st.selectbox("Primary Goal", ["Weight Loss", "Muscle Gain", "Maintenance"])
+        
+        submitted = st.form_submit_button("Submit")
+        
+        if submitted:
+            bmi = calculate_bmi(weight, height)
+            category = get_bmi_category(bmi)
+            
+            st.session_state['profile'] = {
+                'name': name,
+                'age': age,
+                'gender': gender,
+                'weight': weight,
+                'height': height,
+                'target': target,
+                'bmi': bmi,
+                'category': category
+            }
+            
+            st.success("Profile Saved!")
+            st.write(f"Your BMI: {bmi:.1f} ({category})")
+            
+            # Calculate ideal weight and calories
+            ideal_weight = 22 * ((height/100) ** 2)  # BMI of 22 as ideal
+            st.write(f"Your ideal weight range: {ideal_weight-5:.1f} - {ideal_weight+5:.1f} kg")
+            
+            # Basic calorie calculation (Harris-Benedict)
+            if gender == "Male":
+                bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age)
+            else:
+                bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age)
+                
+            st.write(f"Estimated daily calorie needs: {bmr:.0f} (maintenance)")
+
+def show_fitness():
+    st.title("Custom Fitness Plan")
+    
+    if 'profile' not in st.session_state:
+        st.warning("Please complete your profile first")
+        return
+    
+    profile = st.session_state['profile']
+    
+    st.header(f"Hello {profile['name']}, here's your fitness plan")
+    
+    focus_area = st.selectbox("Which area would you like to focus on?", 
+                             ["Full Body", "Abdomen", "Arms", "Legs", "Back"])
+    
+    fitness_level = st.select_slider("Your fitness level", 
+                                   ["Beginner", "Intermediate", "Advanced"])
+    
+    # Generate exercise plan
+    if st.button("Generate Exercise Plan"):
+        plan = generate_exercise_plan(profile['target'], focus_area, fitness_level)
+        
+        st.subheader("Your Daily Exercise Routine")
+        for i, exercise in enumerate(plan, 1):
+            st.write(f"{i}. {exercise}")
+        
+        st.subheader("Exercise Demonstration")
+        # Could add images/videos here
+
+def generate_exercise_plan(target, focus, level):
+    # This would be more comprehensive in a real app
+    plans = {
+        "Weight Loss": {
+            "Full Body": ["Jumping jacks 3x30", "Squats 3x15", "Push-ups 3x10"],
+            "Abdomen": ["Crunches 3x15", "Leg raises 3x10", "Plank 1min"],
+            # More plans
+        },
+        # More targets
+    }
+    return plans.get(target, {}).get(focus, ["Walking 30 minutes"])
+
+def show_diet():
+    st.title("Indian Diet Plan")
+    
+    if 'profile' not in st.session_state:
+        st.warning("Please complete your profile first")
+        return
+    
+    profile = st.session_state['profile']
+    
+    st.header(f"Diet Plan for {profile['name']}")
+    
+    diet_type = st.selectbox("Preferred Diet Type", 
+                           ["Vegetarian", "Non-Vegetarian", "Vegan", "Eggetarian"])
+    
+    # Generate diet plan
+    if st.button("Generate Diet Plan"):
+        st.subheader("Your Daily Meal Plan")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.write("**Breakfast**")
+            st.write("- 2 Rotis + Dal")
+            st.write("- 1 cup Curd")
+            st.write("- 1 Fruit")
+            
+        with col2:
+            st.write("**Lunch**")
+            st.write("- 1 cup Rice")
+            st.write("- 1 cup Vegetables")
+            st.write("- 1 cup Dal")
+            
+        with col3:
+            st.write("**Dinner**")
+            st.write("- 2 Rotis")
+            st.write("- 1 cup Vegetables")
+            st.write("- 1 glass Milk")
+        
+        st.subheader("Recipes")
+        with st.expander("View Recipes"):
+            st.write("**Dal Recipe**")
+            st.write("Ingredients: Toor dal, turmeric, salt, tadka")
+            st.write("Method: Pressure cook dal and add tadka")
+            
+        st.subheader("Calorie Breakdown")
+        fig, ax = plt.subplots()
+        ax.pie([40, 30, 30], labels=["Carbs", "Protein", "Fats"], autopct='%1.1f%%')
+        st.pyplot(fig)
+
+def show_wellness():
+    st.title("Wellness & Glow Up Tips")
+    
+    tab1, tab2, tab3 = st.tabs(["Skin Care", "Hair Care", "General Wellness"])
+    
+    with tab1:
+        st.header("Indian Skin Care Routine")
+        st.write("1. Cleanse with besan + curd")
+        st.write("2. Moisturize with coconut oil")
+        st.write("3. Weekly haldi mask")
+        
+    with tab2:
+        st.header("Hair Care Tips")
+        st.write("- Oil massage with coconut/almond oil")
+        st.write("- Use shikakai for washing")
+        st.write("- Avoid heat styling")
+        
+    with tab3:
+        st.header("General Wellness")
+        st.write("- Drink warm water in morning")
+        st.write("- Practice yoga/pranayama")
+        st.write("- Get 7-8 hours sleep")
+
+def show_tracker():
+    st.title("Progress Tracker")
+    
+    if 'profile' not in st.session_state:
+        st.warning("Please complete your profile first")
+        return
+    
+    st.header("Track Your Progress")
+    
+    current_weight = st.number_input("Current Weight (kg)", 
+                                   min_value=30.0, max_value=200.0)
+    
+    if st.button("Update Progress"):
+        if 'progress' not in st.session_state:
+            st.session_state['progress'] = []
+            
+        st.session_state['progress'].append({
+            'date': pd.Timestamp.now().date(),
+            'weight': current_weight
+        })
+        
+        st.success("Progress Updated!")
+    
+    if 'progress' in st.session_state and len(st.session_state['progress']) > 0:
+        df = pd.DataFrame(st.session_state['progress'])
+        st.line_chart(df.set_index('date')['weight'])
+        
+        initial_weight = st.session_state['profile']['weight']
+        current = df.iloc[-1]['weight']
+        change = initial_weight - current
+        
+        st.write(f"Total change: {change:.1f} kg")
+        
+        if change > 0:
+            st.write(f"Great job! You've lost {change:.1f} kg")
+        elif change < 0:
+            st.write(f"You've gained {abs(change):.1f} kg")
+        else:
+            st.write("Your weight has remained stable")
+
+if __name__ == "__main__":
+    main()
